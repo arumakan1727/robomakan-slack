@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -41,15 +42,57 @@ func (h *TimesAllHandler) Handle(event *slackevents.EventsAPIEvent) {
 		log.Printf("TimesAllHandler: shouldIgnore=true")
 		return
 	}
+	origMsgUrl, err := withlogging.GetMsgPermalink(ev.Channel, ev.TimeStamp, h.cli)
+	if err != nil {
+		return
+	}
+
+	mainText := slack.NewTextBlockObject(slack.MarkdownType, ev.Text, false, false)
+
+	origMsgBtn := slack.NewAccessory(&slack.ButtonBlockElement{
+		Type:     slack.METButton,
+		Text:     slack.NewTextBlockObject(slack.PlainTextType, "Original message", true, false),
+		ActionID: "origMsgUrl",
+		URL:      origMsgUrl,
+	})
+
+	blocks := make([]slack.Block, 0, 3)
+	if len(ev.Files) > 0 {
+		fileInfoText := fmt.Sprintf("%d件の添付ファイル:\n", len(ev.Files))
+		for i := range ev.Files {
+			f := &ev.Files[i]
+			fileInfoText += fmt.Sprintf("<%s|%s>\n", f.Permalink, f.Name)
+		}
+
+		blocks = append(blocks,
+			slack.NewSectionBlock(mainText, nil, nil),
+			slack.NewDividerBlock(),
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject(slack.MarkdownType, fileInfoText, false, false),
+				nil, origMsgBtn,
+			),
+		)
+	} else {
+		blocks = append(blocks, slack.NewSectionBlock(mainText, nil, origMsgBtn))
+	}
 
 	opts := []slack.MsgOption{
-		slack.MsgOptionText(ev.Text, false),
+		slack.MsgOptionBlocks(blocks...),
 		slack.MsgOptionUsername(user.Profile.DisplayName),
 		slack.MsgOptionIconURL(user.Profile.Image192),
 	}
-	_, _, err := h.cli.PostMessage(h.cfg.TimesAllChannelID, opts...)
+	_, _, err = h.cli.PostMessage(h.cfg.TimesAllChannelID, opts...)
 	if err != nil {
 		log.Printf("TimesAllHandler: Failed to PostMessage: %+v\n", err)
+		return
+	}
+
+	for i := range ev.Files {
+		f := &ev.Files[i]
+		_, err := h.cli.ShareRemoteFile([]string{h.cfg.TimesAllChannelID}, "", f.ID)
+		if err != nil {
+			log.Printf("TimesAllHandler: Failed to ShareRemoteFile: %+v\n", err)
+		}
 	}
 }
 

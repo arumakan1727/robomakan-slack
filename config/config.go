@@ -16,6 +16,8 @@ const (
 
 type Config struct {
 	RunMode                RunMode `env:"APP_RUN_MODE"`
+	TimesChannelPrefix     string  `env:"TIMES_CHANNEL_PREFIX"`
+	TimesAllChannelID      string  `env:"TIMES_ALL_CHANNEL_ID"`
 	SlackAppLevelToken     string  `env:"SLACK_APP_LEVEL_TOKEN"`
 	SlackBotUserOAuthToken string  `env:"SLACK_BOT_USER_OAUTH_TOKEN"`
 }

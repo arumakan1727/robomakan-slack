@@ -1,4 +1,6 @@
 # shellcheck shell=sh
 export APP_RUN_MODE='debug'
-export SLACK_APP_LEVEL_TOKEN=
-export SLACK_BOT_USER_OAUTH_TOKEN=
+export SLACK_APP_LEVEL_TOKEN='xapp-XXXXXXXX'
+export SLACK_BOT_USER_OAUTH_TOKEN='xoxb-XXXXXXXX'
+export TIMES_CHANNEL_PREFIX='times_'
+export TIMES_ALL_CHANNEL_ID='XXXXXXXX'

@@ -20,8 +20,10 @@ func main() {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
+	cli := s.SocketClient()
 	s.RegisterEventHandlers(
-		&handlers.MessageLoggingHandler{},
+		handlers.NewMessageLoggingHandler(cli),
+		handlers.NewTimesAllHandler(cfg, cli),
 	)
 
 	log.Println("Start serving...")

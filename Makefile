@@ -20,10 +20,15 @@ app/run:
 lint:
 	golangci-lint run ./...
 
+
 .PHONY:	fmt	## Reformat files (overwrite)
 fmt:
 	go fmt ./...
 
+
+.PHONY:	test	## Test all
+test:
+	go test ./...
 
 .PHONY:	help	## Show Makefile tasks
 help:

@@ -67,9 +67,13 @@ func (s *SocketModeServer) RegisterEventHandlers(hs ...handlers.EventHandler) {
 			}
 
 			cli.Ack(*ev.Request)
-			h.Handle(&evApiEv, cli)
+			h.Handle(&evApiEv)
 		})
 	}
+}
+
+func (s *SocketModeServer) SocketClient() *socketmode.Client {
+	return s.cli
 }
 
 func (s *SocketModeServer) Serve(ctx context.Context) error {

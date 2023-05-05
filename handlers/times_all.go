@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -43,28 +42,30 @@ func (h *TimesAllHandler) Handle(event *slackevents.EventsAPIEvent) {
 		return
 	}
 
-	msgUrl, err := withlogging.GetMsgPermalink(ev.Channel, ev.TimeStamp, h.cli)
-	if err != nil {
-		return
-	}
-	postText := fmt.Sprintf("%s\n<%s|[See original]>",
-		ev.Text, msgUrl,
-	)
-
 	opts := []slack.MsgOption{
-		slack.MsgOptionText(postText, false),
+		slack.MsgOptionText(ev.Text, false),
 		slack.MsgOptionUsername(user.Profile.DisplayName),
 		slack.MsgOptionIconURL(user.Profile.Image192),
-		slack.MsgOptionDisableLinkUnfurl(),
-		slack.MsgOptionAttachments(ev.Attachments...),
 	}
-	_, _, err = h.cli.PostMessage(h.cfg.TimesAllChannelID, opts...)
+	_, _, err := h.cli.PostMessage(h.cfg.TimesAllChannelID, opts...)
 	if err != nil {
 		log.Printf("TimesAllHandler: Failed to PostMessage: %+v\n", err)
 	}
 }
 
 func (h *TimesAllHandler) shouldIgnore(ev *slackevents.MessageEvent) (bool, *slack.Channel, *slack.User) {
+	if ev.User == "" {
+		return true, nil, nil
+	}
+
+	user, err := withlogging.GetUserInfo(ev.User, h.cli)
+	if err != nil {
+		return true, nil, nil
+	}
+	if user.IsBot {
+		return true, nil, nil
+	}
+
 	ch, err := withlogging.GetChannelInfo(ev.Channel, h.cli)
 	if err != nil {
 		return true, nil, nil
@@ -75,17 +76,6 @@ func (h *TimesAllHandler) shouldIgnore(ev *slackevents.MessageEvent) (bool, *sla
 
 	// 「チャンネルにも投稿する」が指定されていないスレッドは無視
 	if util.IsReplyMessage(ev) && ev.SubType != "thread_broadcast" {
-		return true, nil, nil
-	}
-
-	if ev.User == "" {
-		return true, nil, nil
-	}
-	user, err := withlogging.GetUserInfo(ev.User, h.cli)
-	if err != nil {
-		return true, nil, nil
-	}
-	if user.IsBot {
 		return true, nil, nil
 	}
 

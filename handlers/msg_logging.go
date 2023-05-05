@@ -30,7 +30,5 @@ func (h *MessageLoggingHandler) Handle(event *slackevents.EventsAPIEvent) {
 	}
 
 	log.Println("------------------ MessageEvent -----------------")
-	ch, _ := withlogging.GetChannelInfo(ev.Channel, h.cli)
-	user, _ := withlogging.GetUserInfo(ev.Channel, h.cli)
-	pp.Println(ev, ch, user)
+	pp.Println(ev)
 }
